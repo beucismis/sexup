@@ -1,0 +1,7 @@
+image: python:latest
+
+test:
+  stage: test
+  script:
+  - pip3 install pytest
+  - python3 -m pytest -v

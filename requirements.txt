@@ -1,0 +1,4 @@
+pyx
+click
+qrcode
+pillow
