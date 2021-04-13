@@ -12,13 +12,14 @@ def main(file):
     """
 
     if file:
-        from backupill import util
+        import backupill
+
 
         if not os.path.isfile(file):
             click.echo("File '{}' not found!".format(file))
             exit()
 
-        util.generate_backup(asc_file=file)
+        backupill.generate_backup(asc_file=file)
         click.echo("Done!")
     else:
         click.echo("Usage: packupill -f FILENAME.asc")
