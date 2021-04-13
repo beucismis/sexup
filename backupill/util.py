@@ -12,6 +12,8 @@ from tempfile import mkstemp
 from datetime import datetime
 
 
+__all__ = ["generate_backup"]
+
 TEXT_X_OFFSET = 0.6
 TEXT_Y_OFFSET = 8.2
 PLAINTEXT_MAXLINECHARS = 73
@@ -30,81 +32,81 @@ for name in logging.Logger.manager.loggerDict.keys():
     logging.getLogger(name).setLevel(logging.CRITICAL)
 
 
-class Pill:
-    def __init__(self, asc_file):
-        self.ASC_FILE = asc_file
+def _generate_barcode(chunkdata):
+    qr = qrcode.QRCode(
+        version=1,
+        border=4,
+        box_size=10,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+    )
+    qr.add_data(chunkdata)
+    qr.make(fit=True)
 
-        self.pageno = 0
-        self.pageid = 0
-        self.code_blocks = []
+    im = qr.make_image(fill_color="black", back_color="white")
 
-        self._init_pdf()
+    return im
 
-        with open(asc_file) as file:
-            self.ASCDATA = file.read()
 
-    def _init_pdf(self):
-        unit.set(defaultunit="cm")
-        self.pdf = document.document()
+def _finish_page(pdf, canvas, pageno):
+    canvas.text(10, 0.6, "Page {}".format(pageno + 1))
+    pdf.append(document.page(canvas, paperformat=PF_OBJ, fittosize=0, centered=0))
 
-    def _generate_barcode(self, chunkdata):
-        qr = qrcode.QRCode(
-            version=1,
-            border=4,
-            box_size=10,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
+
+def generate_backup(asc_file: str):
+    """Generates PDF backup file.
+
+    Parameters:
+        asc_file (str): ASC (.asc) file path.
+    """
+
+    pageno = 0
+    pageid = 0
+    code_blocks = []
+    chunkdata = "^1 "
+    c = canvas.canvas()
+
+    with open(asc_file) as file:
+        ASCDATA = file.read()
+
+    unit.set(defaultunit="cm")
+    pdf = document.document()
+
+    for char in list(ASCDATA):
+        if len(chunkdata) + 1 > QRCODE_MAX_BYTE:
+            code_blocks.append(_generate_barcode(chunkdata))
+            chunkdata = "^" + str(len(code_blocks) + 1) + " "
+        chunkdata += char
+
+    code_blocks.append(_generate_barcode(chunkdata))
+
+    for bc in range(len(code_blocks)):
+        if pageid >= QRCODE_PER_PAGE:
+            _finish_page(pdf, c, pageno)
+            c = canvas.canvas()
+            pageno += 1
+            pageid = 0
+
+        c.text(
+            QRCODE_X_POS[pageid] + TEXT_X_OFFSET,
+            QRCODE_Y_POS[pageid] + TEXT_Y_OFFSET,
+            "{} ({}/{})".format(
+                text.escapestring(asc_file.split(os.sep)[-1]), bc + 1, len(code_blocks)
+            ),
         )
-        qr.add_data(chunkdata)
-        qr.make(fit=True)
 
-        im = qr.make_image(fill_color="black", back_color="white")
-
-        return im
-
-    def _finish_page(self, pdf, canvas, pageno):
-        canvas.text(10, 0.6, "Page {}".format(pageno + 1))
-        pdf.append(document.page(canvas, paperformat=PF_OBJ, fittosize=0, centered=0))
-
-    def generate_backup(self):
-        chunkdata = "^1 "
-        c = canvas.canvas()
-
-        for char in list(self.ASCDATA):
-            if len(chunkdata) + 1 > QRCODE_MAX_BYTE:
-                self.code_blocks.append(self._generate_barcode(chunkdata))
-                chunkdata = "^" + str(len(self.code_blocks) + 1) + " "
-            chunkdata += char
-
-        self.code_blocks.append(self._generate_barcode(chunkdata))
-
-        for bc in range(len(self.code_blocks)):
-            if self.pageid >= QRCODE_PER_PAGE:
-                self._finish_page(self.pdf, c, self.pageno)
-                c = canvas.canvas()
-                self.pageno += 1
-                self.pageid = 0
-
-            c.text(
-                QRCODE_X_POS[self.pageid] + TEXT_X_OFFSET,
-                QRCODE_Y_POS[self.pageid] + TEXT_Y_OFFSET,
-                "{} ({}/{})".format(
-                    text.escapestring(self.ASC_FILE), bc + 1, len(self.code_blocks)
-                ),
+        c.insert(
+            bitmap.bitmap(
+                QRCODE_X_POS[pageid],
+                QRCODE_Y_POS[pageid],
+                code_blocks[bc],
+                height=QRCODE_HEIGHT,
             )
+        )
 
-            c.insert(
-                bitmap.bitmap(
-                    QRCODE_X_POS[self.pageid],
-                    QRCODE_Y_POS[self.pageid],
-                    self.code_blocks[bc],
-                    height=QRCODE_HEIGHT,
-                )
-            )
+        pageid += 1
 
-            self.pageid += 1
+    _finish_page(pdf, c, pageno)
 
-        self._finish_page(self.pdf, c, self.pageno)
-
-        fd, temp_barcode_path = mkstemp(".pdf", "qr_", ".")
-        self.pdf.writetofile(temp_barcode_path)
-        os.rename(temp_barcode_path.split(os.sep)[-1], self.ASC_FILE + ".pdf")
+    fd, temp_barcode_path = mkstemp(".pdf", "qr_", ".")
+    pdf.writetofile(temp_barcode_path)
+    os.rename(temp_barcode_path.split(os.sep)[-1], asc_file + ".pdf")
