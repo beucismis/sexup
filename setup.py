@@ -24,11 +24,11 @@ setup(
     classifiers=[],
     platforms=["Linux"],
     python_requires=">=3.5",
-    install_requires=["pyx", "click", "qrcode"],
+    install_requires=["pyx", "click", "qrcode", "pillow"],
     keywords=[],
     entry_points={
         "console_scripts": [
-            "backupill = backupill:main",
+            "backupill = backupill.cli:main",
         ],
     },
 )
