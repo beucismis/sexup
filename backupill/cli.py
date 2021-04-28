@@ -1,20 +1,19 @@
 import os
 import click
-from backupill import __version__
+import backupill
 
 
-@click.version_option(version=__version__)
+@click.version_option(version=backupill.__version__)
 @click.option("-f", "--file", help="ASC (.asc) file path.")
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 def main(file):
-    """Generates barcoded PDF to backup text files on paper.
-    https://github.com/beucismis/backupill
+    """
+    \b
+    Generates barcoded PDF to backup text files on paper.
+    Source: https://github.com/beucismis/backupill
     """
 
     if file:
-        import backupill
-
-
         if not os.path.isfile(file):
             click.echo("File '{}' not found!".format(file))
             exit()
