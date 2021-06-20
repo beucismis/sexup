@@ -1,9 +1,9 @@
 import os
 import click
-import backupill
+import backupill as bp
 
 
-@click.version_option(version=backupill.__version__)
+@click.version_option(version=bp.__version__)
 @click.option("-f", "--file", help="ASC (.asc) file path.")
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 def main(file):
@@ -18,7 +18,7 @@ def main(file):
             click.echo("File '{}' not found!".format(file))
             exit()
 
-        backupill.generate_backup(asc_file=file)
+        bp.generate_backup(file)
         click.echo("Done!")
     else:
         click.echo("Usage: packupill -f FILENAME.asc")
