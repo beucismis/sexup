@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from backupill.utils import *
 
 
-__version__ = "0.5.2"
+__version__ = "0.6.2"
 __license__ = "GPL-3.0"
 __author__ = "Adil Gurbuz"
 __contact__ = "beucismis@tutamail.com"
