@@ -89,7 +89,7 @@ def generate_backup(ascfile):
     for char in list(ASCDATA):
         if len(chunkdata) + 1 > QRCODE_MAX_BYTE:
             codeblocks.append(_generate_barcode(chunkdata))
-            chunkdata = "^" + str(len(code_blocks) + 1) + " "
+            chunkdata = "^" + str(len(codeblocks) + 1) + " "
         chunkdata += char
 
     codeblocks.append(_generate_barcode(chunkdata))
