@@ -33,6 +33,14 @@ for name in logging.Logger.manager.loggerDict.keys():
 
 
 def _generate_barcode(chunkdata):
+    """Generates data barcode image
+
+    Args:
+        chunkdata (str): ASC chunk data
+
+    Returns:
+        class: Represents an image object
+    """
     qr = qrcode.QRCode(
         version=1,
         border=4,
@@ -48,24 +56,31 @@ def _generate_barcode(chunkdata):
 
 
 def _finish_page(pdf, canvas, pageno):
+    """Adds numbers to bottom of the page
+
+    Args:
+        pdf (class): PDF object
+        canvas (class): Canvas object
+        pageno (int): The page number
+    """
     canvas.text(10, 0.6, "Page {}".format(pageno + 1))
     pdf.append(document.page(canvas, paperformat=PF_OBJ, fittosize=0, centered=0))
 
 
-def generate_backup(asc_file: str):
-    """Generates PDF backup file.
+def generate_backup(ascfile):
+    """Generates PDF backup file
 
-    Parameters:
-        asc_file (str): ASC (.asc) file path.
+    Args:
+        ascfile (str): ASC (.asc) file path
     """
 
     pageno = 0
     pageid = 0
-    code_blocks = []
+    codeblocks = []
     chunkdata = "^1 "
     c = canvas.canvas()
 
-    with open(asc_file) as file:
+    with open(ascfile) as file:
         ASCDATA = file.read()
 
     unit.set(defaultunit="cm")
@@ -73,13 +88,13 @@ def generate_backup(asc_file: str):
 
     for char in list(ASCDATA):
         if len(chunkdata) + 1 > QRCODE_MAX_BYTE:
-            code_blocks.append(_generate_barcode(chunkdata))
+            codeblocks.append(_generate_barcode(chunkdata))
             chunkdata = "^" + str(len(code_blocks) + 1) + " "
         chunkdata += char
 
-    code_blocks.append(_generate_barcode(chunkdata))
+    codeblocks.append(_generate_barcode(chunkdata))
 
-    for bc in range(len(code_blocks)):
+    for bc in range(len(codeblocks)):
         if pageid >= QRCODE_PER_PAGE:
             _finish_page(pdf, c, pageno)
             c = canvas.canvas()
@@ -90,7 +105,7 @@ def generate_backup(asc_file: str):
             QRCODE_X_POS[pageid] + TEXT_X_OFFSET,
             QRCODE_Y_POS[pageid] + TEXT_Y_OFFSET,
             "{} ({}/{})".format(
-                text.escapestring(asc_file.split(os.sep)[-1]), bc + 1, len(code_blocks)
+                text.escapestring(ascfile.split(os.sep)[-1]), bc + 1, len(codeblocks)
             ),
         )
 
@@ -98,7 +113,7 @@ def generate_backup(asc_file: str):
             bitmap.bitmap(
                 QRCODE_X_POS[pageid],
                 QRCODE_Y_POS[pageid],
-                code_blocks[bc],
+                codeblocks[bc],
                 height=QRCODE_HEIGHT,
             )
         )
@@ -109,4 +124,4 @@ def generate_backup(asc_file: str):
 
     fd, temp_barcode_path = mkstemp(".pdf", "qr_", ".")
     pdf.writetofile(temp_barcode_path)
-    os.rename(temp_barcode_path.split(os.sep)[-1], asc_file + ".pdf")
+    os.rename(temp_barcode_path.split(os.sep)[-1], "{}.pdf".format(ascfile))
