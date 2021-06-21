@@ -1,10 +1,15 @@
 import os
 import pytest
-from backupill import *
+import backupill as bp
 
 
 this_dir, this_filename = os.path.split(__file__)
+test_file = os.path.join(this_dir, "secret_key.asc")
 
 
 def test_generate_backup():
-    generate_backup(asc_file=os.path.join(this_dir, "test.asc"))
+    bp.generate_backup(test_file)
+
+
+def test_restore_backup():
+    pass
