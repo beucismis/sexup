@@ -9,6 +9,8 @@ if sys.version_info < (3, 5):
 with open("README.md") as f:
     long_description = f.read()
 
+with open("requirements.txt") as f:
+    requires = f.read().splitlines()
 
 setup(
     name="backupill",
@@ -24,7 +26,7 @@ setup(
     classifiers=[],
     platforms=["Linux"],
     python_requires=">=3.5",
-    install_requires=["pyx", "click", "qrcode", "pillow"],
+    install_requires=requires,
     keywords=[],
     entry_points={
         "console_scripts": [
