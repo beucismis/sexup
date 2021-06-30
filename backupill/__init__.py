@@ -2,6 +2,7 @@
 
 """
 Copyright (C) 2021- beucismis
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from backupill.utils import *
 
 
-__version__ = "0.6.2"
+__version__ = "0.7.2"
 __license__ = "GPL-3.0"
 __author__ = "Adil Gurbuz"
 __contact__ = "beucismis@tutamail.com"
