@@ -1,18 +1,12 @@
 import os
-
-# import re
 import qrcode
-
-# import hashlib
 import logging
 from pyx import *
-
-# import subprocess
+import subprocess
 from tempfile import mkstemp
-from datetime import datetime
 
 
-__all__ = ["generate_backup"]
+__all__ = ["generate_backup", "restore_backup"]
 
 TEXT_X_OFFSET = 0.6
 TEXT_Y_OFFSET = 8.2
@@ -32,15 +26,9 @@ for name in logging.Logger.manager.loggerDict.keys():
     logging.getLogger(name).setLevel(logging.CRITICAL)
 
 
-def _generate_barcode(chunkdata):
-    """Generates data barcode image
+def _generate_barcode(chunkdata: str) -> object:
+    """Generates data barcode image."""
 
-    Args:
-        chunkdata (str): ASC chunk data
-
-    Returns:
-        class: Represents an image object
-    """
     qr = qrcode.QRCode(
         version=1,
         border=4,
@@ -55,23 +43,18 @@ def _generate_barcode(chunkdata):
     return im
 
 
-def _finish_page(pdf, canvas, pageno):
-    """Adds numbers to bottom of the page
+def _finish_page(pdf: object, canvas: object, pageno: int) -> None:
+    """Adds numbers to bottom of the page."""
 
-    Args:
-        pdf (class): PDF object
-        canvas (class): Canvas object
-        pageno (int): The page number
-    """
     canvas.text(10, 0.6, "Page {}".format(pageno + 1))
     pdf.append(document.page(canvas, paperformat=PF_OBJ, fittosize=0, centered=0))
 
 
-def generate_backup(ascfile):
+def generate_backup(file: str) -> None:
     """Generates PDF backup file
 
     Args:
-        ascfile (str): ASC (.asc) file path
+        file (str): File path
     """
 
     pageno = 0
@@ -80,8 +63,8 @@ def generate_backup(ascfile):
     chunkdata = "^1 "
     c = canvas.canvas()
 
-    with open(ascfile) as file:
-        ASCDATA = file.read()
+    with open(file) as f:
+        ASCDATA = f.read()
 
     unit.set(defaultunit="cm")
     pdf = document.document()
@@ -105,7 +88,7 @@ def generate_backup(ascfile):
             QRCODE_X_POS[pageid] + TEXT_X_OFFSET,
             QRCODE_Y_POS[pageid] + TEXT_Y_OFFSET,
             "{} ({}/{})".format(
-                text.escapestring(ascfile.split(os.sep)[-1]), bc + 1, len(codeblocks)
+                text.escapestring(file.split(os.sep)[-1]), bc + 1, len(codeblocks)
             ),
         )
 
@@ -124,4 +107,29 @@ def generate_backup(ascfile):
 
     fd, temp_barcode_path = mkstemp(".pdf", "qr_", ".")
     pdf.writetofile(temp_barcode_path)
-    os.rename(temp_barcode_path.split(os.sep)[-1], "{}.pdf".format(ascfile))
+    os.rename(temp_barcode_path.split(os.sep)[-1], "{}.pdf".format(file))
+
+
+def restore_backup(file: str) -> int:
+    """Restore PDF backup file
+
+    Args:
+        file (str): File path
+
+    Returns:
+        int: Return code
+    """
+
+    cmd = (
+        "zbarimg --raw -Sdisable -Sqrcode.enable {}" + " | "
+        r"sed -e 's/\^/\x0/g'" + " | "
+        "sort -z -n" + " | "
+        r"sed ':a;N;$!ba;s/\n\x0[0-9]* //g;s/\x0[0-9]* //g;s/\n\x0//g'".format(file)
+    )
+
+    p = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+    p.communicate()[0]
+
+    return p.returncode
