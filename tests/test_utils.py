@@ -4,12 +4,14 @@ import backupill as bp
 
 
 this_dir, this_filename = os.path.split(__file__)
-test_file = os.path.join(this_dir, "secret_key.asc")
+get_test_file = lambda file_name: os.path.join(this_dir, file_name)
 
 
 def test_generate_backup():
-    bp.generate_backup(test_file)
+    result = bp.generate_backup(get_test_file("secret_key.asc"))
+    assert result == None
 
 
 def test_restore_backup():
-    pass
+    result = bp.restore_backup(get_test_file("secret_key.asc.pdf"))
+    assert result == 0
