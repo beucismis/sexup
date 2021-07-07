@@ -3,25 +3,30 @@ import click
 import backupill as bp
 
 
-@click.argument("file", required=True)
 @click.version_option(version=bp.__version__)
-@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
-def main(file):
+@click.option("--verbose", is_flag=1, help="Will print verbose messages.")
+@click.option("-r", "--restore", is_flag=1, help="Restore PDF backup file.")
+@click.option("-g", "--generate", is_flag=1, help="Generate PDF backup file.")
+@click.argument("filename", type=click.Path(exists=1))
+@click.command(context_settings=dict(help_option_names=["--help"]))
+def main(generate, restore, verbose, filename):
     """
     \b
     Generates barcoded PDF to backup text files on paper.
     Source: https://github.com/beucismis/backupill
+
+    \b
+    Example:
+        backupill -g filename.asc
+        backupill -r filename.pdf
     """
 
-    if file:
-        if not os.path.isfile(file):
-            click.echo("Error: File '{}' not found!".format(file))
-            exit()
-
-        bp.generate_backup(file)
-        click.echo("Done!")
-    else:
-        click.echo("Usage: packupill FILENAME.asc")
+    if generate and not restore:
+        bp.generate_backup(click.format_filename(filename))
+        click.echo("Generate backup done!")
+    if restore and not generate:
+        bp.restore_backup(click.format_filename(filename))
+        click.echo("Generate restore done!")
 
 
 if __name__ == "__main__":
