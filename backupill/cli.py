@@ -23,10 +23,10 @@ def main(generate, restore, verbose, filename):
 
     if generate and not restore:
         bp.generate_backup(click.format_filename(filename))
-        click.echo("Generate backup done!")
+        click.echo("Backup done!")
     if restore and not generate:
         bp.restore_backup(click.format_filename(filename))
-        click.echo("Generate restore done!")
+        click.echo("Restore done!")
 
 
 if __name__ == "__main__":
