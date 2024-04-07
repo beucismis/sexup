@@ -1,4 +1,0 @@
-pyx
-click
-qrcode
-pillow

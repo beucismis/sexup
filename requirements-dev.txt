@@ -1,4 +1,0 @@
-twine
-black
-pytest
-virtualenv
